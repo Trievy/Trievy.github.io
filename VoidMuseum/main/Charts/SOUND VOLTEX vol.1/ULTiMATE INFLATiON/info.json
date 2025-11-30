@@ -1,0 +1,32 @@
+{
+    "chart_id": "ui",
+    "name": "ULTiMATE INFLATiON",
+    "formatted_name": "ULTiMATE INFLATiON",
+    "artist": "cosMo@BousouP",
+    "bpm_display": "451",
+    "version": "9.9.9",
+    "is_original": false,
+    "is_published": true,
+    "jacket_artist": "SOUND VOLTEX IV HEAVENLY HAVEN",
+    "has_encore": true,
+    "difficulty_constant_1": 0,
+    "difficulty_display_1": "0",
+    "note_designer_1": "N/A",
+    "difficulty_constant_2": 0,
+    "difficulty_display_2": "0",
+    "note_designer_2": "N/A",
+    "difficulty_constant_3": 0,
+    "difficulty_display_3": "0",
+    "note_designer_3": "0",
+    "difficulty_constant_4":18.5 ,
+    "difficulty_display_4": "18",
+    "note_designer_4": "THE DEEPEST SEA..",
+    "unlock": {
+        "type": 0,
+        "enc_type": 0,
+        "per_difficulty": false,
+        "hidden": false,
+        "hint": "",
+        "enc_hint": ""
+    }
+}
