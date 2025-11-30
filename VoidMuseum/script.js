@@ -8,7 +8,7 @@ class CyberTerminal {
         
         // GitHub配置
         this.githubConfig = {
-            repo: 'AndWhy666/AndWhy666.github.io',
+            repo: 'Trievy/Trievy.github.io',
             branch: 'main',
             token: ''
         };
@@ -93,10 +93,10 @@ class CyberTerminal {
         
         // 查找VoidMuseum文件夹
         const vMainFolder = rootData.tree.find(item => 
-            item.type === 'tree' && item.path.toLowerCase() === 'VoidMuseum'
+            item.type === 'tree' && item.path.toLowerCase() === 'voidmuseum'
         );
         
-        if (!mainFolder) {
+        if (!vMainFolder) {
             throw new Error('在仓库中未找到 VoidMuseum 文件夹');
         }
         
@@ -108,8 +108,10 @@ class CyberTerminal {
             throw new Error(`GitHub API 错误: ${vMainResponse.status} ${vMainResponse.statusText}`);
         }
 
+        const vMainData = await vMainResponse.json();
+
         // 查找main文件夹
-        const mainFolder = rootData.tree.find(item => 
+        const mainFolder = vMainData.tree.find(item => 
             item.type === 'tree' && item.path.toLowerCase() === 'main'
         );
         
