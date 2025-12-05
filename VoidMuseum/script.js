@@ -436,6 +436,7 @@ class CyberTerminal {
         });
         
         this.outputElement.appendChild(fileList);
+        this.addToOutput('Tip:点击列出的项目可以自动填充对应指令','info');
     }
     
     changeDirectory(args) {
