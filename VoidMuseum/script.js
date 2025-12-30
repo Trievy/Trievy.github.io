@@ -1,7 +1,3 @@
-/* 更新点：
-   - 在 fetchGitHubRepoStructure() 中记录 this.basePath（例如 "VoidMuseum/main"）
-   - buildRawGitHubUrl() 会把 this.basePath 加到 filePath 前面（如果尚未包含），并逐段 encodeURIComponent
-*/
 class CyberTerminal {
     constructor() {
         this.outputElement = document.getElementById('output');
@@ -17,9 +13,6 @@ class CyberTerminal {
             token: ''
         };
         
-        // basePath 会在 fetch 时设置，例如 "VoidMuseum/main"
-        this.basePath = '';
-
         // 初始文件系统（空）
         this.fileSystem = {
             name: '~',
@@ -30,7 +23,7 @@ class CyberTerminal {
         // code 到文件的映射表
         this.codeMap = {
             'UNFINISHEDSTORY':"docs/谢幕.txt",
-            'COLLAPSEDEXISTENCE':"docs/入殓师_01.txt",
+            'COLLAPSEDEXISTENCE':"docs/入殓师_1.txt",
             'TOWARDSBEGINNING':"docs/入殓师与旅者的谈话.txt"
         };
         // 当前目录路径
@@ -84,7 +77,7 @@ class CyberTerminal {
     async fetchGitHubRepoStructure() {
         const { repo, branch, token } = this.githubConfig;
         
-        // 首先获取根目录的内容，找到 VoidMuseum 文件夹
+        // 首先获取根目录的内容，找到main文件夹
         const rootUrl = `https://api.github.com/repos/${repo}/git/trees/${branch}`;
         
         const headers = {
@@ -105,7 +98,7 @@ class CyberTerminal {
         
         const rootData = await rootResponse.json();
         
-        // 查找 VoidMuseum 文件夹
+        // 查找VoidMuseum文件夹
         const vMainFolder = rootData.tree.find(item => 
             item.type === 'tree' && item.path.toLowerCase() === 'voidmuseum'
         );
@@ -114,7 +107,7 @@ class CyberTerminal {
             throw new Error('在仓库中未找到 VoidMuseum 文件夹');
         }
         
-        // 获取 VoidMuseum 的递归内容
+        // 获取main文件夹的递归内容
         const vMainUrl = `https://api.github.com/repos/${repo}/git/trees/${vMainFolder.sha}?recursive=1`;
         const vMainResponse = await fetch(vMainUrl, { headers });
         
@@ -124,7 +117,7 @@ class CyberTerminal {
 
         const vMainData = await vMainResponse.json();
 
-        // 查找 main 文件夹（位于 VoidMuseum 下）
+        // 查找main文件夹
         const mainFolder = vMainData.tree.find(item => 
             item.type === 'tree' && item.path.toLowerCase() === 'main'
         );
@@ -132,11 +125,8 @@ class CyberTerminal {
         if (!mainFolder) {
             throw new Error('在仓库中未找到 main 文件夹');
         }
-
-        // 记录 basePath（相对于仓库根的完整路径），用于构建 raw 下载 URL
-        this.basePath = `${vMainFolder.path}/${mainFolder.path}`; // e.g. "VoidMuseum/main"
         
-        // 获取 main 文件夹的递归内容
+        // 获取main文件夹的递归内容
         const mainUrl = `https://api.github.com/repos/${repo}/git/trees/${mainFolder.sha}?recursive=1`;
         const mainResponse = await fetch(mainUrl, { headers });
         
@@ -372,25 +362,6 @@ class CyberTerminal {
         return this.currentPath[this.currentPath.length - 1];
     }
     
-    // Helper: 构建 raw.githubusercontent.com 下载 URL（对路径段单独 encode，并且在必要时加上 this.basePath）
-    buildRawGitHubUrl(filePath) {
-        const { repo, branch } = this.githubConfig;
-        const [owner, repository] = repo.split('/');
-        let fullPath = String(filePath || '').replace(/^\/+/, '').replace(/\/+$/, '');
-        // 如果有 basePath 且 filePath 不是已经完整路径，则加上 basePath
-        if (this.basePath) {
-            // 如果 fullPath 已以 basePath 开头（忽略大小写），就不用再加
-            const normalizedFull = fullPath.toLowerCase();
-            const normalizedBase = this.basePath.toLowerCase().replace(/^\/+|\/+$/g, '');
-            if (!normalizedFull.startsWith(normalizedBase)) {
-                fullPath = `${this.basePath}/${fullPath}`.replace(/\/+/g, '/');
-            }
-        }
-        // 对每个段进行 encodeURIComponent（保留 /）
-        const encodedPath = fullPath.split('/').map(encodeURIComponent).join('/');
-        return `https://raw.githubusercontent.com/${owner}/${repository}/${branch}/${encodedPath}`;
-    }
-
     // 命令实现
     showHelp() {
         const helpText = [
@@ -537,23 +508,21 @@ class CyberTerminal {
             try {
                 this.addToOutput(`正在下载: ${filename}`, 'info');
                 
-                // 构建文件下载URL，使用 raw.githubusercontent.com，并对路径段进行编码
+                // 构建文件下载URL
                 let filePath = fileInfo.path || filename;
                 
-                // 如果当前不在根目录且 fileInfo.path 不可用，需要拼接当前路径段
+                // 如果当前不在根目录，需要构建完整路径
                 if (this.currentPath.length > 1 && !fileInfo.path) {
                     const pathParts = this.currentPath.slice(1).map(node => node.name);
                     filePath = pathParts.join('/') + '/' + filename;
                 }
-
-                const downloadUrl = this.buildRawGitHubUrl(filePath);
-
+                
+                const downloadUrl = `main/${filePath}`;
+                
                 // 创建下载链接
                 const a = document.createElement('a');
                 a.href = downloadUrl;
                 a.download = filename;
-                a.rel = 'noopener';
-                a.target = '_blank';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -597,8 +566,8 @@ class CyberTerminal {
         try {
             this.addToOutput(`正在恢复文件，code: ${code}`, 'info');
             
-            // 构建 raw.githubusercontent 下载 URL（并对路径段编码，避免 '#'、空格问题）
-            const downloadUrl = this.buildRawGitHubUrl(filePath);
+            // 构建文件下载URL
+            const downloadUrl = filePath;
             
             // 提取文件名
             const fileName = filePath.split('/').pop();
@@ -607,8 +576,6 @@ class CyberTerminal {
             const a = document.createElement('a');
             a.href = downloadUrl;
             a.download = fileName;
-            a.rel = 'noopener';
-            a.target = '_blank';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
