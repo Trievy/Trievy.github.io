@@ -362,6 +362,16 @@ class CyberTerminal {
         return this.currentPath[this.currentPath.length - 1];
     }
     
+    // Helper: 构建 raw.githubusercontent.com 下载 URL（对路径段单独 encode）
+    buildRawGitHubUrl(filePath) {
+        const { repo, branch } = this.githubConfig;
+        // repo 形如 "owner/repo"
+        const [owner, repository] = repo.split('/');
+        // 对每个路径段 encodeURIComponent，避免 '#'、空格等问题
+        const encodedPath = filePath.split('/').map(encodeURIComponent).join('/');
+        return `https://raw.githubusercontent.com/${owner}/${repository}/${branch}/${encodedPath}`;
+    }
+
     // 命令实现
     showHelp() {
         const helpText = [
@@ -508,21 +518,23 @@ class CyberTerminal {
             try {
                 this.addToOutput(`正在下载: ${filename}`, 'info');
                 
-                // 构建文件下载URL
+                // 构建文件下载URL，使用 raw.githubusercontent.com，并对路径段进行编码
                 let filePath = fileInfo.path || filename;
                 
-                // 如果当前不在根目录，需要构建完整路径
+                // 如果当前不在根目录且 fileInfo.path 不可用，需要拼接当前路径段
                 if (this.currentPath.length > 1 && !fileInfo.path) {
                     const pathParts = this.currentPath.slice(1).map(node => node.name);
                     filePath = pathParts.join('/') + '/' + filename;
                 }
-                
-                const downloadUrl = `main/${filePath}`;
-                
+
+                const downloadUrl = this.buildRawGitHubUrl(filePath);
+
                 // 创建下载链接
                 const a = document.createElement('a');
                 a.href = downloadUrl;
                 a.download = filename;
+                a.rel = 'noopener';
+                a.target = '_blank';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -566,8 +578,8 @@ class CyberTerminal {
         try {
             this.addToOutput(`正在恢复文件，code: ${code}`, 'info');
             
-            // 构建文件下载URL
-            const downloadUrl = filePath;
+            // 构建 raw.githubusercontent 下载 URL（并对路径段编码，避免 '#'、空格问题）
+            const downloadUrl = this.buildRawGitHubUrl(filePath);
             
             // 提取文件名
             const fileName = filePath.split('/').pop();
@@ -576,6 +588,8 @@ class CyberTerminal {
             const a = document.createElement('a');
             a.href = downloadUrl;
             a.download = fileName;
+            a.rel = 'noopener';
+            a.target = '_blank';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
