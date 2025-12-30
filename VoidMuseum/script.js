@@ -19,7 +19,13 @@ class CyberTerminal {
             type: 'directory',
             children: {}
         };
-        
+
+        // code 到文件的映射表
+        this.codeMap = {
+            'UNFINISHEDSTORY':"docs\\谢幕.txt",
+            'COLLAPSEDEXISTENCE':"docs\\入殓师 #1.txt",
+            'TOWARDSBEGINNING':"docs\\入殓师与旅者的谈话.txt"
+        };
         // 当前目录路径
         this.currentPath = [this.fileSystem];
         
@@ -32,7 +38,8 @@ class CyberTerminal {
             'list': this.listFiles.bind(this),
             'cd': this.changeDirectory.bind(this),
             'scp': this.downloadSpecificFile.bind(this),
-            'pwd': this.showCurrentDirectory.bind(this)
+            'pwd': this.showCurrentDirectory.bind(this),
+            'recover': this.recoverByCode.bind(this)
         };
         
         this.init();
@@ -364,7 +371,8 @@ class CyberTerminal {
             '  ls, list       - 列出当前目录内容',
             '  cd [目录]      - 切换目录',
             '  scp [文件名]   - 下载指定文件',
-            '  pwd            - 显示当前目录路径'
+            '  pwd            - 显示当前目录路径',
+            '  recover [code] - 根据recovery code恢复对应文件'
         ];
         
         helpText.forEach(line => this.addToOutput(line));
@@ -531,6 +539,52 @@ class CyberTerminal {
     showCurrentDirectory() {
         const path = this.currentPath.map(node => node.name).join('/');
         this.addToOutput(path);
+    }// 新增方法：根据code恢复/下载对应文件
+
+    recoverByCode(args) {
+        if (args.length === 0) {
+            this.addToOutput('用法: recover [code]', 'error');
+            return;
+        }
+
+        const code = args[0];
+        
+        // 查找对应的文件路径
+        const filePath = this.codeMap[code];
+        
+        if (!filePath) {
+            this.addToOutput(`错误: 未知的code '${code}'`, 'error');
+            return;
+        }
+        
+        if (!this.githubConfig.repo) {
+            this.addToOutput('错误: 未配置GitHub仓库，无法下载文件', 'error');
+            this.addToOutput('请先配置GitHub仓库', 'info');
+            return;
+        }
+        
+        try {
+            this.addToOutput(`正在恢复文件，code: ${code}`, 'info');
+            
+            // 构建文件下载URL
+            const downloadUrl = filePath;
+            
+            // 提取文件名
+            const fileName = filePath.split('/').pop();
+            
+            // 创建下载链接
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            this.addToOutput(`恢复文件已开始: ${fileName}`, 'success');
+            
+        } catch (error) {
+            this.addToOutput(`恢复失败: ${error.message}`, 'error');
+        }
     }
 }
 
