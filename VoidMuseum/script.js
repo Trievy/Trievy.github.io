@@ -30,7 +30,7 @@ class CyberTerminal {
         // code 到文件的映射表
         this.codeMap = {
             'UNFINISHEDSTORY':"docs/谢幕.txt",
-            'COLLAPSEDEXISTENCE':"docs/入殓师 #1.txt",
+            'COLLAPSEDEXISTENCE':"docs/入殓师_1.txt",
             'TOWARDSBEGINNING':"docs/入殓师与旅者的谈话.txt"
         };
         // 当前目录路径
