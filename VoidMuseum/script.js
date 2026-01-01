@@ -1,3 +1,4 @@
+// 当你能看到这个说明你通过非正常手段来到了这里，回去解密吧
 class CyberTerminal {
     constructor() {
         this.outputElement = document.getElementById('output');
